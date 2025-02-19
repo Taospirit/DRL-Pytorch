@@ -37,7 +37,7 @@ class Critic(nn.Module):
 def evaluate_policy(env, agent, turns = 3):
     total_scores = 0
     for j in range(turns):
-        s, info = env.reset()
+        s, info = env.reset(seed=42)
         done = False
         while not done:
             # Take deterministic actions at test time
@@ -62,3 +62,20 @@ def str2bool(v):
     else:
         print('Wrong Input.')
         raise
+
+import matplotlib.pyplot as plt
+def plot(steps, model_save_dir, title="rl", x_label="Episode", y_label="Reward", step_interval=None):
+    ax = plt.subplot(111)
+    ax.cla()
+    ax.grid()
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.plot(steps)
+    RunTime = len(steps)
+
+    path = model_save_dir + '/RunTime' + str(RunTime) + '.jpg'
+    if step_interval and len(steps) % step_interval == 0:
+        plt.savefig(path)
+        print(f'save fig in {path}')
+    plt.pause(0.0000001)

@@ -1,4 +1,4 @@
-from utils import evaluate_policy, str2bool
+from utils import evaluate_policy, str2bool, plot
 from datetime import datetime
 from PPO import PPO_discrete
 import gymnasium as gym
@@ -15,7 +15,7 @@ parser.add_argument('--render', type=str2bool, default=False, help='Render or No
 parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
 parser.add_argument('--ModelIdex', type=int, default=300000, help='which model to load')
 
-parser.add_argument('--seed', type=int, default=209, help='random seed')
+parser.add_argument('--seed', type=int, default=42, help='random seed')
 parser.add_argument('--T_horizon', type=int, default=2048, help='lenth of long trajectory')
 parser.add_argument('--Max_train_steps', type=int, default=5e7, help='Max training steps')
 parser.add_argument('--save_interval', type=int, default=1e5, help='Model saving interval, in steps.')
@@ -38,7 +38,7 @@ print(opt)
 
 def main():
     # Build Training Env and Evaluation Env
-    EnvName = ['CartPole-v1','LunarLander-v2']
+    EnvName = ['CartPole-v1','LunarLander-v3']
     BriefEnvName = ['CP-v1','LLd-v2']
     env = gym.make(EnvName[opt.EnvIdex], render_mode = "human" if opt.render else None)
     eval_env = gym.make(EnvName[opt.EnvIdex])
@@ -76,6 +76,9 @@ def main():
             print(f'Env:{EnvName[opt.EnvIdex]}, Episode Reward:{ep_r}')
     else:
         traj_lenth, total_steps = 0, 0
+        live_li = []
+        save_dir = './save/ppo'
+        os.makedirs(save_dir, exist_ok=True)
         while total_steps < opt.Max_train_steps:
             s, info = env.reset(seed=env_seed)  # Do not use opt.seed directly, or it can overfit to opt.seed
             env_seed += 1
@@ -104,6 +107,8 @@ def main():
                 '''Record & log'''
                 if total_steps % opt.eval_interval == 0:
                     score = evaluate_policy(eval_env, agent, turns=3) # evaluate the policy for 3 times, and get averaged result
+                    live_li.append(score)
+                    plot(live_li, save_dir, title="ppo", step_interval=10)
                     if opt.write: writer.add_scalar('ep_r', score, global_step=total_steps)
                     print('EnvName:',EnvName[opt.EnvIdex],'seed:',opt.seed,'steps: {}k'.format(int(total_steps/1000)),'score:', score)
 
